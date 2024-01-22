@@ -1,91 +1,3 @@
-
-<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-<script>
-    // Add multiple phone number & remove
-    const maxNumberFields = 2;
-
-    function addNumberField() {
-        const container = document.getElementById('numberContainer');
-        const numberFields = container.querySelectorAll('.input-group');
-
-        if (numberFields.length < maxNumberFields) {
-            const newInput = document.createElement('div');
-            newInput.className = 'input-group mb-3';
-            newInput.innerHTML = `
-        <input type="number" class="form-control" name="numbers" autocomplete="username">
-        <button type="button" class="btn btn-outline-danger" onclick="removeNumberField(this)">Remove</button>
-      `;
-            container.appendChild(newInput);
-        }
-    }
-
-    function removeNumberField(button) {
-        const container = document.getElementById('numberContainer');
-        container.removeChild(button.parentElement);
-    }
-    // Add multiple Email & remove
-    const maxEmailFields = 3;
-
-    function addEmailField() {
-        const container = document.getElementById('emailContainer');
-        const emailFields = container.querySelectorAll('.input-group');
-
-
-        if (emailFields.length < maxEmailFields) {
-            const newInput = document.createElement('div');
-            newInput.className = 'input-group mb-3';
-            newInput.innerHTML = `
-        <input type="email" class="form-control" name="emails" autocomplete="username">
-        <button type="button" class="btn btn-outline-danger" onclick="removeEmailField(this)">Remove</button>
-      `;
-            container.appendChild(newInput);
-        }
-    }
-
-    function removeEmailField(button) {
-        const container = document.getElementById('emailContainer');
-        container.removeChild(button.parentElement);
-    }
-
-    // district,upazila,village
-
-
-    $(document).ready(function() {
-        function updateDropdownOptions(selectElement) {
-            console.log("hel");
-            const selectedValue = selectElement.value;
-            const dependentDropdown = document.getElementById('upazila');
-
-            dependentDropdown.innerHTML = '<option disabled selected>Select Upazila</option>';
-
-            $.ajax({
-                url: "{{ route('employee.getData') }}",
-                type: 'GET',
-                dataType: 'json',
-                data: {
-                    district: selectedValue
-                },
-                success: function(data) {
-                    console.log(data);
-                    data.forEach(optionValue => {
-                        const option = document.createElement('option');
-                        option.value = optionValue;
-                        option.text = optionValue;
-                        dependentDropdown.appendChild(option);
-                    });
-                },
-                error: function(error) {
-                    console.error('Error fetching data:', error);
-                }
-            });
-        }
-    });
-</script>
-
-<!-- Other script tags -->
-
-</script>
-
 <!doctype html>
 <html lang="en">
 
@@ -124,11 +36,12 @@
                         </div>
 
                         <!-- Email Address -->
+                        <!-- Email -->
                         <div class="mb-3">
                             <label for="email" class="form-label">Email</label>
                             <div id="emailContainer">
                                 <div class="input-group mb-3">
-                                    <input type="email" class="form-control" name="emails" autocomplete="username">
+                                    <input type="email" class="form-control" name="emails[]" autocomplete="username">
                                     <button type="button" class="btn btn-outline-primary" onclick="addEmailField()">Add Email</button>
                                 </div>
                             </div>
@@ -137,13 +50,11 @@
                             @enderror
                         </div>
 
-
-
                         <!-- Phone Number -->
                         <div class="mb-3">
                             <label for="number" class="form-label">Phone Number</label>
                             <div class="input-group mb-3" id="numberContainer">
-                                <input type="number" id="number" class="form-control" name="numbers" value="{{ old('numbers.0') }}" autofocus autocomplete="name">
+                                <input type="number" id="number" class="form-control" name="numbers[]" value="{{ old('numbers.0') }}" autofocus autocomplete="name">
                                 <button type="button" class="btn btn-outline-primary" onclick="addNumberField()">Add Number</button>
                             </div>
                             @error('numbers.*')
@@ -169,14 +80,17 @@
                         <!-- district -->
                         <div class="mb-3">
                             <label for="district" class="form-label">District</label>
-                            <select name="district" id="district" class="form-control" onchange="updateDropdownOptions(this.value)">
+                            <select name="district" id="district" class="form-control" onchange="updateDropdownOptions(this)">
                                 <option disabled selected>Select District</option>
-                                <!-- Options will be dynamically populated using JavaScript -->
+                                @foreach($district as $value)
+                                <option>{{ $value->district }}</option>
+                                @endforeach
                             </select>
                             @error('district')
                             <div class="text-danger">{{ $message }}</div>
                             @enderror
                         </div>
+
 
 
 
@@ -251,6 +165,8 @@
                     <th scope="col">Email</th>
                     <th scope="col">Phone Number</th>
                     <th scope="col">Department</th>
+                    <th scope="col">District</th>
+                    <th scope="col">Upazila</th>
                     <th scope="col">Joining Date</th>
                     <th scope="col">Gender</th>
                     <th scope="col">Image</th>
@@ -260,24 +176,35 @@
                 @foreach($data as $employee)
                 <tr>
                     <td>{{ $employee->name }}</td>
-                    <td>{{ $employee->emails }}</td>
-                    <td>{{ $employee->numbers }}</td>
-                    <td>{{ $employee->department }}</td>
-                    <td>{{ $employee->date }}</td>
-                    <td>{{ $employee->gender }}</td>
-                    <td>
-                        <?php
-                        if (!empty($employee->image)) {
-                            $imageData = base64_decode($employee->image);
-                            $finfo = new finfo(FILEINFO_MIME_TYPE);
-                            $imageType = $finfo->buffer($imageData);
-                        ?>
-                            <img src='data:<?php echo $imageType; ?>;base64,<?php echo base64_encode($imageData); ?>' style='max-width: 50px; max-height: 100px;' class="img-thumbnail">
-                        <?php } else { ?>
-                            <!-- Handle the case where image data is empty -->
-                            No Image
-                        <?php } ?>
-                    </td>
+                    <<td>
+                        @foreach(json_decode($employee->emails) as $email)
+                        {{ $email }}<br>
+                        @endforeach
+                        </td>
+                        <td>
+                            @foreach(json_decode($employee->numbers) as $number)
+                            {{ $number }}<br>
+                            @endforeach
+                        </td>
+
+                        <td>{{ $employee->department }}</td>
+                        <td>{{ $employee->district }}</td>
+                        <td>{{ $employee->upazila }}</td>
+                        <td>{{ $employee->date }}</td>
+                        <td>{{ $employee->gender }}</td>
+                        <td>
+                            <?php
+                            if (!empty($employee->image)) {
+                                $imageData = base64_decode($employee->image);
+                                $finfo = new finfo(FILEINFO_MIME_TYPE);
+                                $imageType = $finfo->buffer($imageData);
+                            ?>
+                                <img src='data:<?php echo $imageType; ?>;base64,<?php echo base64_encode($imageData); ?>' style='max-width: 50px; max-height: 100px;' class="img-thumbnail">
+                            <?php } else { ?>
+                                <!-- Handle the case where image data is empty -->
+                                No Image
+                            <?php } ?>
+                        </td>
                 </tr>
                 @endforeach
             </tbody>
@@ -287,6 +214,98 @@
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script>
+        // Add multiple phone number & remove
+        const maxNumberFields = 2;
+
+        function addNumberField() {
+            const container = document.getElementById('numberContainer');
+            const numberFields = container.querySelectorAll('.input-group');
+
+            if (numberFields.length < maxNumberFields) {
+                const newInput = document.createElement('div');
+                newInput.className = 'input-group mb-3';
+                newInput.innerHTML = `
+        <input type="number" class="form-control" name="numbers[]" autocomplete="username">
+        <button type="button" class="btn btn-outline-danger" onclick="removeNumberField(this)">Remove</button>
+      `;
+                container.appendChild(newInput);
+            }
+        }
+
+        function removeNumberField(button) {
+            const container = document.getElementById('numberContainer');
+            container.removeChild(button.parentElement);
+        }
+        // Add multiple Email & remove
+        const maxEmailFields = 3;
+
+        function addEmailField() {
+            const container = document.getElementById('emailContainer');
+            const emailFields = container.querySelectorAll('.input-group');
+
+
+            if (emailFields.length < maxEmailFields) {
+                const newInput = document.createElement('div');
+                newInput.className = 'input-group mb-3';
+                newInput.innerHTML = `
+        <input type="email" class="form-control" name="emails[]" autocomplete="username">
+        <button type="button" class="btn btn-outline-danger" onclick="removeEmailField(this)">Remove</button>
+      `;
+                container.appendChild(newInput);
+            }
+        }
+
+        function removeEmailField(button) {
+            const container = document.getElementById('emailContainer');
+            container.removeChild(button.parentElement);
+        }
+
+        // district,upazila,village
+
+
+        function updateDropdownOptions(selectElement) {
+            const selectedValue = selectElement.value;
+            console.log(selectedValue);
+            const dependentDropdown = document.getElementById('upazila');
+            const dependent = document.getElementById('upazilaContainer');
+
+            // Hide the 'Upazila' dropdown initially
+            dependentDropdown.style.display = 'none';
+
+            // Check if a valid district is selected
+            if (selectedValue) {
+                $.ajax({
+                    url: "{{ route('employee.getData') }}",
+                    type: 'GET',
+                    dataType: 'json',
+                    data: {
+                        district: selectedValue
+                    },
+                    success: function(data) {
+                        data.forEach(optionValue => {
+                            const option = document.createElement('option');
+                            option.value = optionValue;
+                            option.text = optionValue;
+                            dependentDropdown.appendChild(option);
+                        });
+
+                        // Show the 'Upazila' dropdown after populating options
+                        dependent.style.display = 'block';
+                        dependentDropdown.style.display = 'block';
+
+
+                    },
+                    error: function(error) {
+                        console.error('Error fetching data:', error);
+                    }
+                });
+            }
+        }
+    </script>
+
 </body>
 
 </html>

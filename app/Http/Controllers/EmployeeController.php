@@ -14,7 +14,10 @@ class EmployeeController extends Controller
     public function create()
     {
         $data = DB::table('employees')->get();
-       return view('index',compact('data'));
+        $district=DB::table('addresss')->get();
+       //  dd($data);
+        return view('index', compact('data', 'district'));
+
 
 
     }
@@ -44,16 +47,16 @@ class EmployeeController extends Controller
 
         $inserted = DB::table('employees')->insert([
             'name' => $request->name,
-            'emails' => $request->emails,
-            'numbers' => $request->numbers,
+            'emails' => json_encode($request->emails), // Convert array to JSON
+            'numbers' => json_encode($request->numbers), // Convert array to JSON
             'department' => $request->department,
             'district' => $request->district,
             'upazila' => $request->upazila,
             'date' => $request->date,
             'gender' => $request->gender,
             'image' => $encodedImage
-
         ]);
+
 
         if ($inserted) {
             return redirect()->route('index')->with('success', 'Employee created successfully');

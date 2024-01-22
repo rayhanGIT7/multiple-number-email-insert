@@ -7,14 +7,19 @@ use Illuminate\Support\Facades\DB;
 class GetDataController extends Controller
 {
 
-public function GetData(Request $request)
-{
-dd($request->all());
-    $district = $request->input('district');
+    public function GetData(Request $request)
+    {
+        $district = $request->input('district');
 
-        $data = DB::table('addresss')->where('district', $district)->pluck('upazila')->toArray();
+    //  dd($district );
+        $data = DB::table('addresss')->where('district', $district)->distinct()->pluck('upazila')->toArray();
+
+
+        // dd($data);
+
         return response()->json($data);
-}
+    }
+
 
 
 }
